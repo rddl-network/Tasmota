@@ -174,7 +174,7 @@ void getPlntmntKeys(){
   HDNode node_planetmint;
   hdnode_from_seed( secret_seed, SEED_SIZE, SECP256K1_NAME, &node_planetmint);
   hdnode_private_ckd_prime(&node_planetmint, 44);
-  hdnode_private_ckd_prime(&node_planetmint, 8680); 
+  hdnode_private_ckd_prime(&node_planetmint, 8680);
   hdnode_private_ckd_prime(&node_planetmint, 0);
   hdnode_private_ckd(&node_planetmint, 0);
   hdnode_private_ckd(&node_planetmint, 0);

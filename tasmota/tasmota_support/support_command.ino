@@ -792,7 +792,7 @@ void CmdMachineCid(void) {
   {
     char buffer[58] = {0};
     char* machinecid = getValueForKeyRaw("machinecid", buffer);
-    Response_P( "{ %s: %s }", D_CMND_MACHINECID, machinecid );
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINECID, machinecid );
   }
   
   CmndStatusResponse(0);
