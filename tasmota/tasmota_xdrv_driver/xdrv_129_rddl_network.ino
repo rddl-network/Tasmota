@@ -149,6 +149,16 @@ void storeKeyValuePair( const char* key, const char* value, size_t length)
   free(hexstring);
 }
 
+void storeKeyValuePairRaw( const char* key, const char* value, size_t length)
+{
+  BrREPLRun((char*)"import persist");
+  String key_string = key;
+  String value_string = value;
+  String cmd = String("persist.") + key + String("=\"") + value_string + String("\"");
+  BrREPLRun((char*)cmd.c_str());
+  BrREPLRun((char*)"persist.save()");
+}
+
 void storeSeed()
 {
   storeKeyValuePair( (const char*)"seed", (const char*) secret_seed, SEED_SIZE);
@@ -164,7 +174,7 @@ void getPlntmntKeys(){
   HDNode node_planetmint;
   hdnode_from_seed( secret_seed, SEED_SIZE, SECP256K1_NAME, &node_planetmint);
   hdnode_private_ckd_prime(&node_planetmint, 44);
-  hdnode_private_ckd_prime(&node_planetmint, 8680);
+  hdnode_private_ckd_prime(&node_planetmint, 8680); 
   hdnode_private_ckd_prime(&node_planetmint, 0);
   hdnode_private_ckd(&node_planetmint, 0);
   hdnode_private_ckd(&node_planetmint, 0);
@@ -203,8 +213,6 @@ bool hasKey(const char * key){
     return false;
 }
 
-
-
 char* getValueForKey( const char* key, char* buffer )
 {
   if( ! hasKey(key) )
@@ -215,6 +223,17 @@ char* getValueForKey( const char* key, char* buffer )
   BrREPLRunRDDL((char*)cmd.c_str(), buffer );
   const uint8_t * storageString = fromHexString(buffer);
   strcpy(buffer, (const char*) storageString );
+  return buffer;
+}
+
+char* getValueForKeyRaw( const char* key, char* buffer )
+{
+  if( ! hasKey(key) )
+    return NULL;
+  String key_string = key;
+  String cmd = String("persist.find(\"") + key_string + String("\")");
+  BrREPLRun((char*)"import persist");
+  BrREPLRunRDDL((char*)cmd.c_str(), buffer );
   return buffer;
 }
 
@@ -511,8 +530,11 @@ int registerMachine(){
     char hexpubkey[66+1] = {0};
     toHexString( hexpubkey, g_pub_key_planetmint, 66);
 
+    char buffer[58] = {0};
+    char* machinecid = getValueForKeyRaw("machinecid", buffer);
+
     Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
-    metadata.additionaldatacid = "";
+    metadata.additionaldatacid = machinecid;
     metadata.gps = "{\"Latitude\":\"-48.876667\",\"Longitude\":\"-123.393333\"}";
     metadata.assetdefinition = "{\"Version\": \"0.1\"}";
     metadata.device = "{\"Manufacturer\": \"RDDL\",\"Serial\":\"AdnT2uyt\"}";
