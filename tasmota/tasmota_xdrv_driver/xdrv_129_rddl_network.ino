@@ -609,11 +609,13 @@ void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
 
   if( ret == -2 )
   {
+    ResponseAppend_P("Register: Machine\n");
     Serial.println("Register: Machine\n");
     registerMachine();
   }
   else
   {
+    ResponseAppend_P("RNotarize: CID Asset\n");
     Serial.println("Notarize: CID Asset\n");
   }
   
