@@ -57,8 +57,10 @@
 #define EXT_PUB_KEY_SIZE 112
 uint32_t counted_seconds = 0;
 
-uint8_t g_priv_key[32+1]= {0};
-uint8_t g_pub_key[33+1] = {0};
+uint8_t g_priv_key_planetmint[32+1] = {0};
+uint8_t g_priv_key_liquid[32+1] = {0};
+uint8_t g_pub_key_planetmint[33+1] = {0};
+uint8_t g_pub_key_liquid[33+1] = {0};
 char g_address[64] = {0};
 char g_ext_pub_key_planetmint[EXT_PUB_KEY_SIZE+1] = {0};
 char g_ext_pub_key_liquid[EXT_PUB_KEY_SIZE+1] = {0};
@@ -66,6 +68,8 @@ char g_ext_pub_key_liquid[EXT_PUB_KEY_SIZE+1] = {0};
 const char* getRDDLAddress() { return (const char*) g_address; }
 const char* getExtPubKeyLiquid() { return (const char*)g_ext_pub_key_liquid; }
 const char* getExtPubKeyPlanetmint() { return (const char*)g_ext_pub_key_planetmint; }
+const uint8_t* getPrivKeyLiquid() { return (const uint8_t*)g_priv_key_liquid; }
+const uint8_t* getPrivKeyPlanetmint() { return (const uint8_t*)g_priv_key_planetmint; }
 
 bool g_readSeed = false;
 
@@ -146,6 +150,16 @@ void storeKeyValuePair( const char* key, const char* value, size_t length)
   free(hexstring);
 }
 
+void storeKeyValuePairRaw( const char* key, const char* value, size_t length)
+{
+  BrREPLRun((char*)"import persist");
+  String key_string = key;
+  String value_string = value;
+  String cmd = String("persist.") + key + String("=\"") + value_string + String("\"");
+  BrREPLRun((char*)cmd.c_str());
+  BrREPLRun((char*)"persist.save()");
+}
+
 void storeSeed()
 {
   storeKeyValuePair( (const char*)"seed", (const char*) secret_seed, SEED_SIZE);
@@ -166,8 +180,8 @@ void getPlntmntKeys(){
   hdnode_private_ckd(&node_planetmint, 0);
   hdnode_private_ckd(&node_planetmint, 0);
   hdnode_fill_public_key(&node_planetmint);
-  memcpy(g_priv_key, node_planetmint.private_key, 32);
-  memcpy(g_pub_key, node_planetmint.public_key, PUB_KEY_SIZE);
+  memcpy(g_priv_key_planetmint, node_planetmint.private_key, 32);
+  memcpy(g_pub_key_planetmint, node_planetmint.public_key, PUB_KEY_SIZE);
 
   HDNode node_rddl;
   hdnode_from_seed( secret_seed, SEED_SIZE, SECP256K1_NAME, &node_rddl);
@@ -177,12 +191,12 @@ void getPlntmntKeys(){
   hdnode_private_ckd(&node_rddl, 0);
   hdnode_private_ckd(&node_rddl, 0);
   hdnode_fill_public_key(&node_rddl);
-  memcpy(g_priv_key, node_rddl.private_key, 32);
-  memcpy(g_pub_key, node_rddl.public_key, PUB_KEY_SIZE);
+  memcpy(g_priv_key_liquid, node_rddl.private_key, 32);
+  memcpy(g_pub_key_liquid, node_rddl.public_key, PUB_KEY_SIZE);
 
   
   uint8_t address_bytes[ADDRESS_TAIL] = {0};
-  pubkey2address( g_pub_key, PUB_KEY_SIZE, address_bytes );
+  pubkey2address( g_pub_key_planetmint, PUB_KEY_SIZE, address_bytes );
   getAddressString( address_bytes, g_address);
   uint32_t fingerprint = hdnode_fingerprint(&node_planetmint);
   int ret = hdnode_serialize_public( &node_planetmint, fingerprint, PLANETMINT_PMPB, g_ext_pub_key_planetmint, EXT_PUB_KEY_SIZE);
@@ -200,8 +214,6 @@ bool hasKey(const char * key){
     return false;
 }
 
-
-
 char* getValueForKey( const char* key, char* buffer )
 {
   if( ! hasKey(key) )
@@ -212,6 +224,17 @@ char* getValueForKey( const char* key, char* buffer )
   BrREPLRunRDDL((char*)cmd.c_str(), buffer );
   const uint8_t * storageString = fromHexString(buffer);
   strcpy(buffer, (const char*) storageString );
+  return buffer;
+}
+
+char* getValueForKeyRaw( const char* key, char* buffer )
+{
+  if( ! hasKey(key) )
+    return NULL;
+  String key_string = key;
+  String cmd = String("persist.find(\"") + key_string + String("\")");
+  BrREPLRun((char*)"import persist");
+  BrREPLRunRDDL((char*)cmd.c_str(), buffer );
   return buffer;
 }
 
@@ -545,14 +568,17 @@ bool getGPSstring( char** gps_data ){
 }
 
 int registerMachine(){
+  
+  char buffer[58+1] = {0};
   char hexpubkey[66+1] = {0};
-  toHexString( hexpubkey, g_pub_key, 66);
-
   char* gps_str = NULL;
+
   getGPSstring( &gps_str );
+  toHexString( hexpubkey, g_pub_key_planetmint, 66);
+  char* machinecid = getValueForKeyRaw("machinecid", buffer);
 
   Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
-  metadata.additionaldatacid = "";
+  metadata.additionaldatacid = machinecid;
   metadata.gps = gps_str;
   metadata.assetdefinition = "{\"Version\": \"0.1\"}";
   metadata.device = "{\"Manufacturer\": \"RDDL\",\"Serial\":\"otherserial\"}";
@@ -600,7 +626,7 @@ void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
   getPlntmntKeys();
 
   Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;
-  gnerateAnyCIDAttestMsgGeneric(&anyMsg, cid_str, g_priv_key, g_pub_key, g_address );
+  gnerateAnyCIDAttestMsgGeneric(&anyMsg, cid_str, g_priv_key_planetmint, g_pub_key_planetmint, g_address );
   int ret = create_broadcast_tx(&anyMsg, "2", false);
   free( anyMsg.value.data);
 
