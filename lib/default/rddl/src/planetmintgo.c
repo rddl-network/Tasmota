@@ -281,10 +281,4 @@ bool removeIPAddr( char* gps_data )
     ptr[0]= substitution_str[0];
     ptr[1]=0;
     return true;
-//     size_t len = ptr - gps_json_string +2;
-//     char* new_str = malloc( len );
-//     memset(new_str,0, len);
-//     memcpy(new_str, gps_json_string, len-2);
-//     new_str[len-2]= substitution_str[0];
-//     free(new_str);
 }
