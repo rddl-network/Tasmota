@@ -169,7 +169,8 @@ void storeKeyValuePairRaw( const char* key, const char* value, size_t length)
 
 void storeSeed()
 {
-  storeKeyValuePair( (const char*)"seed", (const char*) secret_seed, SEED_SIZE);
+  writefile( (const char*)"seed", secret_seed, SEED_SIZE );
+  //storeKeyValuePair( (const char*)"seed", (const char*) secret_seed, SEED_SIZE);
   g_readSeed = false;
 }
 
@@ -253,13 +254,11 @@ uint8_t* readSeed()
   if( g_readSeed )
     return secret_seed;
 
-  char buffer[300] = {0};
-  char* ret = getValueForKey( "seed", buffer);
-  if( ret == NULL )
+  char buffer[200] = {0};
+  int readbytes = readfile( "seed", secret_seed, SEED_SIZE);
+  if( readbytes != SEED_SIZE )
     return NULL;
 
-  //const uint8_t * seed = fromHexString(buffer);
-  //memset( secret_seed, 0, SEED_SIZE );
   memcpy( secret_seed, (const void *)buffer, SEED_SIZE);
   g_readSeed = true;
 
@@ -446,25 +445,33 @@ char g_accountid[20] = {0};
 
 void setPlanetmintAPI( const char* api, size_t len)
 {
-  storeKeyValuePair( "planetmintapi", api, len);
+  //storeKeyValuePair( "planetmintapi", api, len);
+  writefile( "planetmintapi", (uint8_t*)api, len);
   memset((void*)g_planetmintapi,0, 100);
 }
 char* getPlanetmintAPI()
 {
-  if( strlen( g_planetmintapi) == 0 )
-    getValueForKey( "planetmintapi", g_planetmintapi);
+  if( strlen( g_planetmintapi) == 0 ){
+    int readbytes = readfile( "planetmintapi", (uint8_t*)g_planetmintapi, 100);
+    if( readbytes < 0 )
+      memset((void*)g_planetmintapi,0, 100);
+  }
   return g_planetmintapi;
 }
 
 void setAccountID( const char* account, size_t len)
 {
-  storeKeyValuePair( "accountid", account, len);
+  //storeKeyValuePair( "accountid", account, len);
+  writefile( "accountid", (uint8_t*)account, len);
   memset((void*)g_accountid,0, 20);
 }
 char* getAccountID()
 {
-  if( strlen( g_accountid) == 0 )
-    getValueForKey( "accountid", g_accountid);
+  if( strlen( g_accountid) == 0 ){
+      int readbytes = readfile( "accountid", (uint8_t*)g_accountid, 20);
+    if( readbytes < 0 )
+      memset((void*)g_planetmintapi,0, 100);
+  }
   return g_accountid;
 }
   
@@ -612,7 +619,11 @@ int registerMachine(void* anyMsg){
   toHexString( signature_hex, signature, 64*2);
 
   //getGPSstring( &gps_str );
-  char* machinecid = getValueForKeyRaw("machinecid", machinecid_buffer);
+  if( strlen( g_planetmintapi) == 0 ){
+    int readbytes = readfile( "machinecid", (uint8_t*)machinecid_buffer, 58+1);
+    if( readbytes < 0 )
+      memset((void*)machinecid_buffer,0, 58+1);
+  }
 
   Planetmintgo__Machine__Metadata metadata = PLANETMINTGO__MACHINE__METADATA__INIT;
   metadata.additionaldatacid = machinecid_buffer;
@@ -647,30 +658,58 @@ int registerMachine(void* anyMsg){
   return 0;
 }
 
-
-void writefile() {
+int readfile( const char* filename, uint8_t* content, size_t length ){
+  char* filename_local = (char*) getStack( strlen( filename ) +2 );
+  filename_local[0]= '/';
+  strcpy( &filename_local[1], filename);
 
   if (!LittleFS.begin()) {
     Serial.println("Failed to mount file system");
-    return;
+    return -1;
   }
 
-  File file = LittleFS.open("/myfile.txt", "w");
+  File file = LittleFS.open(filename_local, "r");
 
   if (!file) {
     Serial.println("Failed to open file for writing");
-    return;
+    return -1;
+  }
+  size_t readbytes = file.read(content, length);
+  //size_t written = file.write(content, length);
+  file.close();
+  return readbytes;
+  //return (written == length);
+
+}
+
+bool writefile( const char* filename, uint8_t* content, size_t length) {
+  char* filename_local = (char*) getStack( strlen( filename ) +2 );
+  filename_local[0]= '/';
+  strcpy( &filename_local[1], filename);
+
+  if (!LittleFS.begin()) {
+    Serial.println("Failed to mount file system");
+    return false;
   }
 
-  file.print("Hello, Tasmota!");
+  File file = LittleFS.open(filename_local, "w");
+
+  if (!file) {
+    Serial.println("Failed to open file for writing");
+    return false;
+  }
+  size_t written = file.write(content, length);
   file.close();
+  return (written == length);
+  //LittleFS.end();
+  return true;
 }
 
 
 void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
   Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;
   clearStack();
-  writefile();
+  //writefile();
   getPlntmntKeys();
   int status = 0;
   if( hasMachineBeenAttested() )
@@ -681,7 +720,8 @@ void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
     const char* cid_str = (const char*) create_cid_v1_from_string( data_str );
 
     // store cid
-    storeKeyValuePair( cid_str, data_str,0 );
+    writefile( cid_str, (uint8_t*)data_str, data_length );
+    //storeKeyValuePair( cid_str, data_str,0 );
 
     // register CID
     registerCID( cid_str );
