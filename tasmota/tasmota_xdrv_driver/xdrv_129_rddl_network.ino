@@ -54,7 +54,7 @@
 #include "planetmintgo/asset/tx.pb-c.h"
 #include "google/protobuf/any.pb-c.h"
 
-
+#include "LittleFS.h"
 #define EXT_PUB_KEY_SIZE 112
 uint32_t counted_seconds = 0;
 
@@ -647,9 +647,30 @@ int registerMachine(void* anyMsg){
   return 0;
 }
 
+
+void writefile() {
+
+  if (!LittleFS.begin()) {
+    Serial.println("Failed to mount file system");
+    return;
+  }
+
+  File file = LittleFS.open("/myfile.txt", "w");
+
+  if (!file) {
+    Serial.println("Failed to open file for writing");
+    return;
+  }
+
+  file.print("Hello, Tasmota!");
+  file.close();
+}
+
+
 void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
   Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;
   clearStack();
+  writefile();
   getPlntmntKeys();
   int status = 0;
   if( hasMachineBeenAttested() )
