@@ -786,8 +786,7 @@ void CmndAccountID(void)
 void CmdMachineCid(void) {
   if( XdrvMailbox.data_len )
   {
-    writefile("machinecid", (uint8_t*)XdrvMailbox.data, XdrvMailbox.data_len);
-    //SstoreKeyValuePairRaw( "machinecid", (const char*)XdrvMailbox.data, XdrvMailbox.data_len );
+    rddl_writefile("machinecid", (uint8_t*)XdrvMailbox.data, XdrvMailbox.data_len);
     Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MACHINECID, XdrvMailbox.data );
   }
   else
