@@ -713,9 +713,9 @@ bool rddl_writefile( const char* filename, uint8_t* content, size_t length) {
 void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
   Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;
   clearStack();
-  //writefile();
   getPlntmntKeys();
   int status = 0;
+
   if( hasMachineBeenAttested() )
   {
     size_t data_size = data_length;
@@ -729,7 +729,6 @@ void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
 
     // store cid
     rddl_writefile( cid_str, (uint8_t*)local_data, data_size );
-    //storeKeyValuePair( cid_str, data_str,0 );
 
     // register CID
     //registerCID( cid_str );
