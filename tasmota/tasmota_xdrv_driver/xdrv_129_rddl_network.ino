@@ -138,35 +138,6 @@ void getNotarizationMessage(){
   MqttShowSensor(false);
 }
 
-
-void storeKeyValuePair( const char* key, const char* value, size_t length)
-{
-  
-  if( 0 == length )
-    length = strlen(value);
-  length = length * 2;
-  char* hexstring = (char*)malloc(length+1);
-  hexstring[length] = 0;
-  toHexString( (char*)hexstring, (uint8_t*)value, length);
-  BrREPLRun((char*)"import persist");
-  String key_string = key;
-  String value_string = hexstring;
-  String cmd = String("persist.") + key + String("=\"") + value_string + String("\"");
-  BrREPLRun((char*)cmd.c_str());
-  BrREPLRun((char*)"persist.save()");
-  free(hexstring);
-}
-
-void storeKeyValuePairRaw( const char* key, const char* value, size_t length)
-{
-  BrREPLRun((char*)"import persist");
-  String key_string = key;
-  String value_string = value;
-  String cmd = String("persist.") + key + String("=\"") + value_string + String("\"");
-  BrREPLRun((char*)cmd.c_str());
-  BrREPLRun((char*)"persist.save()");
-}
-
 void storeSeed()
 {
   rddl_writefile( (const char*)"seed", secret_seed, SEED_SIZE );
