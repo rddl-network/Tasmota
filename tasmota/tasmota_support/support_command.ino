@@ -20,7 +20,7 @@
 #include <string.h>
 #include "rddl.h"
 #include "planetmintgo.h"
-
+#include "rddlSDKAPI.h"
 
 
 const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
@@ -728,22 +728,32 @@ void CmndStatusResponse(uint32_t index) {
   }
 }
 
+char TEST_SEED[]        = "12345d8b5ee5bcefd523ee4d4340a8956affbef5bb1978eb1e3f640318f87f4b";
+
 void CmndMemonic(void)
 {
   int32_t payload = XdrvMailbox.payload;
   char* mnemonic = NULL;
 
-  if( XdrvMailbox.data_len )
-  {
-    mnemonic = (char*)setSeed( XdrvMailbox.data, XdrvMailbox.data_len );
-  }
-  else
-  {
-    mnemonic = (char*)getMnemonic();
-    mnemonic = (char*)setSeed( mnemonic, strlen(mnemonic) );
-  }
-  storeSeed();
-  Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MNEMONIC,mnemonic );
+  // if( XdrvMailbox.data_len )
+  // {
+  //   mnemonic = (char*)setSeed( XdrvMailbox.data, XdrvMailbox.data_len );
+  // }
+  // else
+  // {
+  //   mnemonic = (char*)getMnemonic();
+  //   mnemonic = (char*)setSeed( mnemonic, strlen(mnemonic) );
+  // }
+  // storeSeed();
+  // mnemonic = sdkSetSeed(XdrvMailbox.data, XdrvMailbox.data_len);
+
+  //sdkStoreSeed(TEST_SEED);
+
+  char seed_arr[128] = {0};
+  int  seed_size = sizeof(seed_arr);
+  sdkReadSeed(seed_arr, &seed_size);
+  
+  Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MNEMONIC, seed_arr );
 
   CmndStatusResponse(20);
   ResponseClear();
@@ -1209,7 +1219,7 @@ void CmndStatus(void)
       int current_position  = ResponseLength();
       size_t data_length = (size_t)(current_position - start_position);
       const char* data_str = TasmotaGlobal.mqtt_data.c_str() + start_position;
-      runRDDLNotarizationWorkflow(data_str, data_length);
+      runRDDLSDKNotarizationWorkflow(data_str, data_length);
       releaseNotarizationMutex();
     }
 #else
