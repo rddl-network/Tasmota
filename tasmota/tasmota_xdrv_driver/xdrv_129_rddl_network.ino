@@ -654,7 +654,6 @@ bool rddl_writefile( const char* filename, uint8_t* content, size_t length) {
 }
 
 void runRDDLNotarizationWorkflow(const char* data_str, size_t data_length){
-  return;
   Google__Protobuf__Any anyMsg = GOOGLE__PROTOBUF__ANY__INIT;
   clearStack();
   getPlntmntKeys();
