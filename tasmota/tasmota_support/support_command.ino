@@ -728,8 +728,6 @@ void CmndStatusResponse(uint32_t index) {
   }
 }
 
-char TEST_SEED[]        = "12345d8b5ee5bcefd523ee4d4340a8956affbef5bb1978eb1e3f640318f87f4b";
-
 void CmndMemonic(void)
 {
   int32_t payload = XdrvMailbox.payload;
