@@ -735,25 +735,9 @@ void CmndMemonic(void)
   int32_t payload = XdrvMailbox.payload;
   char* mnemonic = NULL;
 
-  // if( XdrvMailbox.data_len )
-  // {
-  //   mnemonic = (char*)setSeed( XdrvMailbox.data, XdrvMailbox.data_len );
-  // }
-  // else
-  // {
-  //   mnemonic = (char*)getMnemonic();
-  //   mnemonic = (char*)setSeed( mnemonic, strlen(mnemonic) );
-  // }
-  // storeSeed();
-  // mnemonic = sdkSetSeed(XdrvMailbox.data, XdrvMailbox.data_len);
+  mnemonic = sdkSetSeed(XdrvMailbox.data, XdrvMailbox.data_len);
 
-  //sdkStoreSeed(TEST_SEED);
-
-  char seed_arr[128] = {0};
-  int  seed_size = sizeof(seed_arr);
-  sdkReadSeed(seed_arr, &seed_size);
-  
-  Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MNEMONIC, seed_arr );
+  Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MNEMONIC, mnemonic );
 
   CmndStatusResponse(20);
   ResponseClear();
