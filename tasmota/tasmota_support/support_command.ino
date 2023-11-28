@@ -41,9 +41,10 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_TIMEDST "|" D_CMND_ALTITUDE "|" D_CMND_LEDPOWER "|" D_CMND_LEDSTATE "|" D_CMND_LEDMASK "|" D_CMND_LEDPWM_ON "|" D_CMND_LEDPWM_OFF "|" D_CMND_LEDPWM_MODE "|"
   D_CMND_WIFIPOWER "|" D_CMND_TEMPOFFSET "|" D_CMND_HUMOFFSET "|" D_CMND_SPEEDUNIT "|" D_CMND_GLOBAL_TEMP "|" D_CMND_GLOBAL_HUM"|" D_CMND_GLOBAL_PRESS "|" D_CMND_SWITCHTEXT "|" D_CMND_WIFISCAN "|" D_CMND_WIFITEST "|"
   D_CMND_ZIGBEE_BATTPERCENT "|"
-  D_CMND_MNEMONIC "|" D_CMND_PUBLICKEYS "|" D_CMND_ACCOUNTID "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|" D_CMND_MACHINECID "|"
-  D_CMND_BALANCE "|" D_CMND_GETACCOUNTID "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"
-  D_CMND_POPCHALLENGE "|"
+  D_CMND_MNEMONIC "|" D_CMND_PUBLICKEYS "|" D_CMND_PLANETMINTAPI "|" D_CMND_CHALLENGERESPONSE "|"
+  D_CMND_BALANCE "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_GETACCOUNTID "|"
+  D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|" 
+  D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" 
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -84,8 +85,10 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndTimeDst, &CmndAltitude, &CmndLedPower, &CmndLedState, &CmndLedMask, &CmndLedPwmOn, &CmndLedPwmOff, &CmndLedPwmMode,
   &CmndWifiPower,&CmndTempOffset, &CmndHumOffset, &CmndSpeedUnit, &CmndGlobalTemp, &CmndGlobalHum, &CmndGlobalPress, &CmndSwitchText, &CmndWifiScan, &CmndWifiTest,
   &CmndBatteryPercent,
-  &CmndMemonic, &CmndPublicKeys, &CmndAccountID, &CmndPlanetmintAPI, &CmndChallengeResponse, &CmdMachineCid, &CmndBalance, 
-  &CmndGetAccountID, &CmdResolveCid, &CmndPlanetmintDenom, &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge,
+  &CmndMemonic, &CmndPublicKeys, &CmndPlanetmintAPI, &CmndChallengeResponse,
+  &CmndBalance, &CmdResolveCid, &CmndPlanetmintDenom, &CmndGetAccountID, 
+  &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
+  &CmndNotarizationPeriodicity, &CmndNotarize, 
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -746,11 +749,14 @@ void CmndPublicKeys(void)
 {
   int32_t payload = XdrvMailbox.payload;
   char* mnemonic = NULL;
-  getPlntmntKeys();
-
-  Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
-    "Address", getRDDLAddress(), "Liquid", getExtPubKeyLiquid(), "Planetmint", getExtPubKeyPlanetmint(), "Machine ID", getMachinePublicKey() );
-  
+  if( !getPlntmntKeys() )
+  {
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_PUBLICKEYS, "Initialize Keys first (Mnemonic)");
+  }
+  else {
+    Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
+      "Address", getRDDLAddress(), "Liquid", getExtPubKeyLiquid(), "Planetmint", getExtPubKeyPlanetmint(), "Machine ID", getMachinePublicKey() );
+  }
   CmndStatusResponse(21);
   ResponseClear();
 }
@@ -761,42 +767,30 @@ void CmndPlanetmintAPI(void)
 
   if( XdrvMailbox.data_len )
   {
-    setPlanetmintAPI((const char*)XdrvMailbox.data, XdrvMailbox.data_len);
+    SettingsUpdateText( SET_PLANETMINT_API, (const char*)XdrvMailbox.data);
   }
 
-  Response_P( "{ \"D_CMND_PLANETMINTAPI\": \"%s\" }", getPlanetmintAPI() );
+  Response_P( "{ \"D_CMND_PLANETMINTAPI\": \"%s\" }", SettingsText(SET_PLANETMINT_API) );
   CmndStatusResponse(22);
   ResponseClear();
 }
 
-void CmndAccountID(void)
-{
-  if( XdrvMailbox.data_len )
-  {
-    setAccountID(XdrvMailbox.data, XdrvMailbox.data_len );
+void CmndNotarizationPeriodicity(void) {
+  if( XdrvMailbox.data_len ) {
+    //verify convertibility
+    uint32_t value = (uint32_t)atoi(SettingsText( SET_NOTARIZTATION_PERIODICITY));
+    SettingsUpdateText( SET_NOTARIZTATION_PERIODICITY, XdrvMailbox.data);
   }
-  char* paccountid = getAccountID();
-  Response_P( "{ \"D_CMND_ACCOUNTID\": {\"AccountID\": %s} }", paccountid );
 
-  
+  Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_NOTARIZATION_PERIODICITY, "in seconds", SettingsText( SET_NOTARIZTATION_PERIODICITY) );
+
   CmndStatusResponse(23);
   ResponseClear();
 }
 
-void CmdMachineCid(void) {
-  if( XdrvMailbox.data_len )
-  {
-    rddl_writefile("machinecid", (uint8_t*)XdrvMailbox.data, XdrvMailbox.data_len);
-    Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MACHINECID, XdrvMailbox.data );
-  }
-  else
-  {
-    char machinecid_buffer[58+1] = {0};
-    if( !readfile( "machinecid", (uint8_t*)machinecid_buffer, 58+1) )
-      memset((void*)machinecid_buffer,0, 58+1);
-    Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINECID, (char*)machinecid_buffer );
-  }
-  
+void CmndNotarize(void) {
+  RDDLNotarize();
+  Response_P( "{ \"%s\": \"%s\" }", D_CMND_NOTARIZE, "finished" );
   CmndStatusResponse(24);
   ResponseClear();
 }
@@ -808,9 +802,8 @@ void CmdResolveCid(void) {
     uint8_t* buff = getStack(MY_STACK_LIMIT);
     char* charPtr = reinterpret_cast<char*>(buff);
     
-    char machinecid_buffer[58+1] = {0};
     if( !readfile( cid, buff, MY_STACK_LIMIT) )
-      memset((void*)machinecid_buffer,0, 58+1);
+      charPtr[0]=0;
 
     Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_RESOLVEID, charPtr );
   } else {
@@ -823,35 +816,41 @@ void CmdResolveCid(void) {
 
 void CmndBalance(void) {
 
-  getPlntmntKeys();
-  HTTPClientLight http;
-  String uri = "/cosmos/bank/v1beta1/balances/";
+  if( !getPlntmntKeys() )
+  {
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_BALANCE, "Initialize Keys first (Mnemonic)");
+  }
+  else {
+    HTTPClientLight http;
+    String uri = "/cosmos/bank/v1beta1/balances/";
 
-  uri = getPlanetmintAPI() + uri;
-  uri = uri + getRDDLAddress() ;
-  http.begin(uri);
-  http.addHeader("Content-Type", "application/json");
+    uri = SettingsText(SET_PLANETMINT_API)  + uri;
+    uri = uri + getRDDLAddress() ;
+    http.begin(uri);
+    http.addHeader("Content-Type", "application/json");
 
-  int httpResponseCode = http.GET();
-  Response_P( "{ \"%s\": \"%s\" }", D_CMND_BALANCE, http.getString().c_str() );
-
+    int httpResponseCode = http.GET();
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_BALANCE, http.getString().c_str() );
+  }
   CmndStatusResponse(26);
   ResponseClear();
 }
 
 void CmndGetAccountID()
 {
-  getPlntmntKeys();
   uint64_t account_id = 0;
   uint64_t sequence = 0;
-  bool gotAccountID =  getAccountInfo( (const char*)getRDDLAddress() , &account_id,& sequence );
-  if( !gotAccountID )
+  if( !getPlntmntKeys() )
   {
-    char* paccountid = getAccountID();
-    account_id = (uint64_t) atoi( (const char*) paccountid);
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_GETACCOUNTID, "Initialize Keys first (Mnemonic)");
+  } else {
+    bool gotAccountID =  getAccountInfo( (const char*)getRDDLAddress() , &account_id,& sequence );
+    if( !gotAccountID ){
+      Response_P("{ \"%s\":\"%s\" }", D_CMND_GETACCOUNTID, "unable to lookup account information");
+    } else {
+      Response_P("{ \"%s\":\"%u\" }", D_CMND_GETACCOUNTID, account_id);
+    }
   }
-  ResponseAppend_P("{ %s\":\"%u\" }", D_CMND_GETACCOUNTID, account_id);
-
 
   CmndStatusResponse(27);
   ResponseClear();
@@ -884,15 +883,12 @@ void CmndChallengeResponse(void) {
 void CmndPlanetmintDenom(void) {
   if( XdrvMailbox.data_len )
   {
-    setDenom((const char*)XdrvMailbox.data, XdrvMailbox.data_len );
-    Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTDENOM, XdrvMailbox.data );
+    SettingsUpdateText( SET_PLANETMINT_DENOM, (const char*)XdrvMailbox.data);
   }
-  else
-  {
-    char* p_denom = getDenom();
-    Response_P( "{ \"%s\": \"%s\" }", D_CMND_PLANETMINTDENOM, p_denom );
-  }
-  
+
+  char* p_denom = SettingsText( SET_PLANETMINT_DENOM );
+  Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTDENOM, p_denom );
+
   CmndStatusResponse(29);
   ResponseClear();
 }
@@ -900,14 +896,12 @@ void CmndPlanetmintDenom(void) {
 void CmndPlanetmintChainID(void) {
   if( XdrvMailbox.data_len )
   {
-    setChainID( (const char*)XdrvMailbox.data, XdrvMailbox.data_len );
-    Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTCHAINID, XdrvMailbox.data );
+    SettingsUpdateText( SET_PLANETMINT_CHAINID, (const char*)XdrvMailbox.data);
+
   }
-  else
-  {
-    char* p_chainid = getChainID();
-    Response_P( "{ \"%s\": \"%s\" }", D_CMND_PLANETMINTCHAINID, p_chainid );
-  }
+
+  char* p_chainid = SettingsText( SET_PLANETMINT_CHAINID );
+  Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTCHAINID, p_chainid);
   
   CmndStatusResponse(30);
   ResponseClear();
@@ -915,18 +909,21 @@ void CmndPlanetmintChainID(void) {
 
 void CmndMachineData(void) {
 
-  getPlntmntKeys();
-  HTTPClientLight http;
-  String uri = "/planetmint/machine/get_machine_by_public_key/";
+  if( !getPlntmntKeys() ){
+    Response_P("{ \"%s\":\"%s\" }", D_CMND_MACHINEDATA, "Initialize Keys first (Mnemonic)");
+  }
+  else {
+    HTTPClientLight http;
+    String uri = "/planetmint/machine/get_machine_by_public_key/";
 
-  uri = getPlanetmintAPI() + uri;
-  uri = uri + getExtPubKeyPlanetmint() ;
-  http.begin(uri);
-  http.addHeader("Content-Type", "application/json");
+    uri = SettingsText(SET_PLANETMINT_API)  + uri;
+    uri = uri + getExtPubKeyPlanetmint() ;
+    http.begin(uri);
+    http.addHeader("Content-Type", "application/json");
 
-  int httpResponseCode = http.GET();
-  Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINEDATA, http.getString().c_str() );
-
+    int httpResponseCode = http.GET();
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_MACHINEDATA, http.getString().c_str() );
+  }
   CmndStatusResponse(31);
   ResponseClear();
 }
@@ -962,6 +959,61 @@ void CmndPoPChallenge(void) {
   }
   
   CmndStatusResponse(32);
+  ResponseClear();
+}
+#define MAX_TOKENS 6
+void CmndAttestMachine(void) {
+  char* msg = "No parameters found. Please enter: machine categroy, machine manufacturer, CID to cover more details";
+  if( XdrvMailbox.data_len )
+  {
+    // verify if two parameters are passed. 
+    
+    int tokenCount = 0;  // Counter for the number of tokens
+    char* tokens[MAX_TOKENS] = {NULL};
+
+    // Initialize all tokens to NULL
+    for (int i = 0; i < MAX_TOKENS; i++) {
+      tokens[i] = "";
+    }
+
+    // Duplicate the string as strtok modifies the original string
+    char tempString[strlen( (const char*)XdrvMailbox.data) + 1];
+    strcpy(tempString, XdrvMailbox.data);
+
+    // Using strtok to split and store tokens
+    char* token = strtok(tempString, " "); // Space as delimiter
+    while (token != NULL && tokenCount < MAX_TOKENS) {
+      tokens[tokenCount++] = token;
+      token = strtok(NULL, " "); // Continue to next token
+    }
+    Response_P("{");
+    // Output based on token count
+    if (tokenCount == 0) {
+      Serial.println(msg);
+    } else if (tokenCount == 1) {
+      ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, "2 params" );
+    } else if (tokenCount == 2) {
+      ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, "2 params" );
+    } else if (tokenCount == 3) {
+      ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, "3 params" );
+    } else {
+      Serial.println("More than two tokens found.");
+    }
+    // attest machine
+    if( tokenCount > 0 && tokenCount < 4){
+      ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, " valid set of params" );
+      runRDDLMachineAttestation( tokens[0], tokens[1], tokens[2] );
+    }
+
+    ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, XdrvMailbox.data );
+  }
+  else
+  {
+    Serial.println( msg );
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_ATTESTMACHINE, msg );
+  }
+   ResponseAppend_P("}");
+  CmndStatusResponse(33);
   ResponseClear();
 }
 
