@@ -737,7 +737,7 @@ void CmndMemonic(void)
   char* mnemonic = NULL;
 
   mnemonic = sdkSetSeed(XdrvMailbox.data, XdrvMailbox.data_len);
-
+  
   Response_P(S_JSON_COMMAND_SVALUE,D_CMND_MNEMONIC, mnemonic );
 
   CmndStatusResponse(20);
@@ -749,13 +749,13 @@ void CmndPublicKeys(void)
 {
   int32_t payload = XdrvMailbox.payload;
   char* mnemonic = NULL;
-  if( !getPlntmntKeys() )
+  if( !sdkGetPlntmntKeys() )
   {
     Response_P("{ \"%s\":\"%s\" }", D_CMND_PUBLICKEYS, "Initialize Keys first (Mnemonic)");
   }
   else {
     Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
-      "Address", getRDDLAddress(), "Liquid", getExtPubKeyLiquid(), "Planetmint", getExtPubKeyPlanetmint(), "Machine ID", getMachinePublicKey() );
+      "Address", sdkGetRDDLAddress(), "Liquid", sdkGetExtPubKeyLiquid(), "Planetmint", sdkGetExtPubKeyPlanetmint(), "Machine ID", sdkGetMachinePublicKey() );
   }
   CmndStatusResponse(21);
   ResponseClear();
@@ -1002,7 +1002,7 @@ void CmndAttestMachine(void) {
     // attest machine
     if( tokenCount > 0 && tokenCount < 4){
       ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, " valid set of params" );
-      runRDDLMachineAttestation( tokens[0], tokens[1], tokens[2] );
+      runRDDLSDKMachineAttestation( tokens[0], tokens[1], tokens[2] );
     }
 
     ResponseAppend_P(S_JSON_COMMAND_SVALUE,D_CMND_ATTESTMACHINE, XdrvMailbox.data );
