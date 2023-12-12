@@ -57,24 +57,6 @@
 #include "FS.h"
 #endif  // ESP32
 
-#include "rddl.h"
-#include "rddl_cid.h"
-#include "bip39.h"
-#include "bip32.h"
-#include "curves.h"
-#include "ed25519.h"
-#include "base58.h"
-#include "math.h"
-#include "secp256k1.h"
-
-#include "rddl_types.h"
-#include "planetmintgo.h"
-#include "planetmintgo/machine/machine.pb-c.h"
-#include "cosmos/tx/v1beta1/tx.pb-c.h"
-#include "planetmintgo/machine/tx.pb-c.h"
-#include "planetmintgo/asset/tx.pb-c.h"
-#include "google/protobuf/any.pb-c.h"
-
 #include "rddlSDKAPI.h"
 
 #define EXT_PUB_KEY_SIZE 112
