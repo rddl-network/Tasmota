@@ -787,10 +787,10 @@ void CmndPlanetmintAPI(void)
 
   if( XdrvMailbox.data_len )
   {
-    SettingsUpdateText( SET_PLANETMINT_API, (const char*)XdrvMailbox.data);
+    sdkSetSetting( SET_PLANETMINT_API, (const char*)XdrvMailbox.data);
   }
 
-  Response_P( "{ \"D_CMND_PLANETMINTAPI\": \"%s\" }", SettingsText(SET_PLANETMINT_API) );
+  Response_P( "{ \"D_CMND_PLANETMINTAPI\": \"%s\" }", sdkGetSetting(SET_PLANETMINT_API) );
   CmndStatusResponse(22);
   ResponseClear();
 }
@@ -798,11 +798,11 @@ void CmndPlanetmintAPI(void)
 void CmndNotarizationPeriodicity(void) {
   if( XdrvMailbox.data_len ) {
     //verify convertibility
-    uint32_t value = (uint32_t)atoi(SettingsText( SET_NOTARIZTATION_PERIODICITY));
-    SettingsUpdateText( SET_NOTARIZTATION_PERIODICITY, XdrvMailbox.data);
+    uint32_t value = (uint32_t)atoi(sdkGetSetting( SET_NOTARIZTATION_PERIODICITY));
+    sdkSetSetting( SET_NOTARIZTATION_PERIODICITY, XdrvMailbox.data);
   }
 
-  Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_NOTARIZATION_PERIODICITY, "in seconds", SettingsText( SET_NOTARIZTATION_PERIODICITY) );
+  Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_NOTARIZATION_PERIODICITY, "in seconds", sdkGetSetting( SET_NOTARIZTATION_PERIODICITY) );
 
   CmndStatusResponse(23);
   ResponseClear();
@@ -822,7 +822,7 @@ void CmdResolveCid(void) {
     uint8_t* buff = getStack(MY_STACK_LIMIT);
     char* charPtr = reinterpret_cast<char*>(buff);
     
-    if( !readfile( cid, buff, MY_STACK_LIMIT) )
+    if( !sdkReadFile( cid, buff, MY_STACK_LIMIT) )
       charPtr[0]=0;
 
     Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_RESOLVEID, charPtr );
@@ -836,7 +836,7 @@ void CmdResolveCid(void) {
 
 void CmndBalance(void) {
 
-  if( !getPlntmntKeys() )
+  if( !sdkGetPlntmntKeys() )
   {
     Response_P("{ \"%s\":\"%s\" }", D_CMND_BALANCE, "Initialize Keys first (Mnemonic)");
   }
@@ -844,8 +844,8 @@ void CmndBalance(void) {
     HTTPClientLight http;
     String uri = "/cosmos/bank/v1beta1/balances/";
 
-    uri = SettingsText(SET_PLANETMINT_API)  + uri;
-    uri = uri + getRDDLAddress() ;
+    uri = sdkGetSetting(SET_PLANETMINT_API)  + uri;
+    uri = uri + sdkGetRDDLAddress() ;
     http.begin(uri);
     http.addHeader("Content-Type", "application/json");
 
@@ -860,11 +860,11 @@ void CmndGetAccountID()
 {
   uint64_t account_id = 0;
   uint64_t sequence = 0;
-  if( !getPlntmntKeys() )
+  if( !sdkGetPlntmntKeys() )
   {
     Response_P("{ \"%s\":\"%s\" }", D_CMND_GETACCOUNTID, "Initialize Keys first (Mnemonic)");
   } else {
-    bool gotAccountID =  getAccountInfo( (const char*)getRDDLAddress() , &account_id,& sequence );
+    bool gotAccountID =  sdkGetAccountInfo( &account_id, &sequence );
     if( !gotAccountID ){
       Response_P("{ \"%s\":\"%s\" }", D_CMND_GETACCOUNTID, "unable to lookup account information");
     } else {
@@ -890,8 +890,8 @@ void CmndChallengeResponse(void) {
 
   const uint8_t * digest_hex = fromHexString(digest);
 
-  int res1 = SignDataHashWithPrivKey(digest_hex, getPrivKeyLiquid(), liquidSigHash );
-  int res2 = SignDataHashWithPrivKey(digest_hex, getPrivKeyPlanetmint(), planetmintSigHash );
+  int res1 = SignDataHashWithPrivKey(digest_hex, sdkGetPrivKeyLiquid(), liquidSigHash );
+  int res2 = SignDataHashWithPrivKey(digest_hex, sdkGetPrivKeyPlanetmint(), planetmintSigHash );
 
 
   Response_P("{ \"" D_CMND_CHALLENGERESPONSE "\": {\n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
@@ -903,10 +903,10 @@ void CmndChallengeResponse(void) {
 void CmndPlanetmintDenom(void) {
   if( XdrvMailbox.data_len )
   {
-    SettingsUpdateText( SET_PLANETMINT_DENOM, (const char*)XdrvMailbox.data);
+    sdkSetSetting( SET_PLANETMINT_DENOM, (const char*)XdrvMailbox.data);
   }
 
-  char* p_denom = SettingsText( SET_PLANETMINT_DENOM );
+  char* p_denom = sdkGetSetting( SET_PLANETMINT_DENOM );
   Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTDENOM, p_denom );
 
   CmndStatusResponse(29);
@@ -916,11 +916,11 @@ void CmndPlanetmintDenom(void) {
 void CmndPlanetmintChainID(void) {
   if( XdrvMailbox.data_len )
   {
-    SettingsUpdateText( SET_PLANETMINT_CHAINID, (const char*)XdrvMailbox.data);
+    sdkSetSetting( SET_PLANETMINT_CHAINID, (const char*)XdrvMailbox.data);
 
   }
 
-  char* p_chainid = SettingsText( SET_PLANETMINT_CHAINID );
+  char* p_chainid = sdkGetSetting( SET_PLANETMINT_CHAINID );
   Response_P(S_JSON_COMMAND_SVALUE,D_CMND_PLANETMINTCHAINID, p_chainid);
   
   CmndStatusResponse(30);
@@ -929,15 +929,15 @@ void CmndPlanetmintChainID(void) {
 
 void CmndMachineData(void) {
 
-  if( !getPlntmntKeys() ){
+  if( !sdkGetPlntmntKeys() ){
     Response_P("{ \"%s\":\"%s\" }", D_CMND_MACHINEDATA, "Initialize Keys first (Mnemonic)");
   }
   else {
     HTTPClientLight http;
     String uri = "/planetmint/machine/get_machine_by_public_key/";
 
-    uri = SettingsText(SET_PLANETMINT_API)  + uri;
-    uri = uri + getExtPubKeyPlanetmint() ;
+    uri = sdkGetSetting(SET_PLANETMINT_API)  + uri;
+    uri = uri + sdkGetExtPubKeyPlanetmint() ;
     http.begin(uri);
     http.addHeader("Content-Type", "application/json");
 
@@ -957,7 +957,7 @@ void CmndPoPChallenge(void) {
     uint8_t* content =  getStack( length );
     memset( content, 0, length);
     const char* cid = XdrvMailbox.data;
-    if( readfile( cid, content, length )){
+    if( sdkReadFile( cid, content, length )){
       char* encoding = "hex"; // or "raw", "hex", "b58", "base64"
       uint8_t* encoded_content =  getStack( length );
       int readBytes = strlen( (const char*)content );
