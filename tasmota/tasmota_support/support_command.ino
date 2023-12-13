@@ -819,10 +819,10 @@ void CmdResolveCid(void) {
   if( XdrvMailbox.data_len ) {
     const char* cid = (const char*)XdrvMailbox.data;
     sdkClearStack();
-    uint8_t* buff = sdkGetStack(MY_STACK_LIMIT);
+    uint8_t* buff = sdkGetStack(SDK_STACK_LIMIT);
     char* charPtr = reinterpret_cast<char*>(buff);
     
-    if( !sdkReadFile( cid, buff, MY_STACK_LIMIT) )
+    if( !sdkReadFile( cid, buff, SDK_STACK_LIMIT) )
       charPtr[0]=0;
 
     Response_P( "{ \"%s\": {\"%s\": \"%s\"}  }", D_CMND_RESOLVEID, charPtr );
