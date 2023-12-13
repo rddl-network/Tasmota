@@ -223,6 +223,8 @@ bool Xdrv129(uint32_t function) {
       break;
     case FUNC_COMMAND:
       RDDLNotarize();
+      result = true;
+
       break;
     case FUNC_PRE_INIT:
       RDDLNetworkSettingsLoad(0);
@@ -231,7 +233,6 @@ bool Xdrv129(uint32_t function) {
       // !!! DO NOT USE AS IT'S FUNCTION IS BETTER HANDLED BY FUNC_SAVE_SETTINGS !!!
       break;
   }
-  result = true;
   return result;
 }
 
