@@ -5,6 +5,7 @@
 #include "sha2.h"
 #include "base32.h"
 #include "rddl_cid.h"
+#include "planetmintgo.h"
 
 void string_to_lowercase(char* str) {
     for(int i = 0; str[i]; i++){

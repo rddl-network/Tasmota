@@ -774,8 +774,8 @@ void CmndPublicKeys(void)
     Response_P("{ \"%s\":\"%s\" }", D_CMND_PUBLICKEYS, "Initialize Keys first (Mnemonic)");
   }
   else {
-    Response_P("{ \""D_CMND_PUBLICKEYS"\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
-      "Address", sdkGetRDDLAddress(), "Liquid", sdkGetExtPubKeyLiquid(), "Planetmint", sdkGetExtPubKeyPlanetmint(), "Machine ID", sdkGetMachinePublicKey() );
+    Response_P("{ \"%s\": {\n \"%s\": \"%s\",\n \"%s\": \"%s\", \n \"%s\": \"%s\", \n \"%s\": \"%s\" } }",
+      D_CMND_PUBLICKEYS, "Address", sdkGetRDDLAddress(), "Liquid", sdkGetExtPubKeyLiquid(), "Planetmint", sdkGetExtPubKeyPlanetmint(), "Machine ID", sdkGetMachinePublicKey() );
   }
   CmndStatusResponse(21);
   ResponseClear();
@@ -818,8 +818,8 @@ void CmndNotarize(void) {
 void CmdResolveCid(void) {
   if( XdrvMailbox.data_len ) {
     const char* cid = (const char*)XdrvMailbox.data;
-    clearStack();
-    uint8_t* buff = getStack(MY_STACK_LIMIT);
+    sdkClearStack();
+    uint8_t* buff = sdkGetStack(MY_STACK_LIMIT);
     char* charPtr = reinterpret_cast<char*>(buff);
     
     if( !sdkReadFile( cid, buff, MY_STACK_LIMIT) )
@@ -952,16 +952,16 @@ void CmndPoPChallenge(void) {
 
   if( XdrvMailbox.data_len )
   {
-    clearStack();
+    sdkClearStack();
     size_t length = 1048;
-    uint8_t* content =  getStack( length );
+    uint8_t* content =  sdkGetStack( length );
     memset( content, 0, length);
     const char* cid = XdrvMailbox.data;
     if( sdkReadFile( cid, content, length )){
-      char* encoding = "hex"; // or "raw", "hex", "b58", "base64"
-      uint8_t* encoded_content =  getStack( length );
+      char* encoding = (char*)"hex"; // or "raw", "hex", "b58", "base64"
+      uint8_t* encoded_content =  sdkGetStack( length );
       int readBytes = strlen( (const char*)content );
-      char* encoded_data = (char*)getStack( 2*readBytes+1 );
+      char* encoded_data = (char*)sdkGetStack( 2*readBytes+1 );
       memset( encoded_data, 0,2*readBytes+1 );
       toHexString( encoded_data, content, 2*readBytes );
       Response_P( "{ \"%s\": {", D_CMND_POPCHALLENGE);
@@ -983,7 +983,7 @@ void CmndPoPChallenge(void) {
 }
 #define MAX_TOKENS 6
 void CmndAttestMachine(void) {
-  char* msg = "No parameters found. Please enter: machine categroy, machine manufacturer, CID to cover more details";
+  char* msg = (char*)"No parameters found. Please enter: machine categroy, machine manufacturer, CID to cover more details";
   if( XdrvMailbox.data_len )
   {
     // verify if two parameters are passed. 
@@ -993,7 +993,7 @@ void CmndAttestMachine(void) {
 
     // Initialize all tokens to NULL
     for (int i = 0; i < MAX_TOKENS; i++) {
-      tokens[i] = "";
+      tokens[i] = (char*)"";
     }
 
     // Duplicate the string as strtok modifies the original string
