@@ -43,12 +43,6 @@
 #include <algorithm>
 
 
-#include "hmac.h"
-#include "sha3.h"
-
-#include "base64_plntmnt.h"
-#include "ed25519.h"
-
 #ifdef ESP32
 #ifdef USE_SDCARD
 #include <SD.h>
@@ -59,7 +53,7 @@
 
 #include "rddlSDKAPI.h"
 
-#define EXT_PUB_KEY_SIZE 112
+
 uint32_t counted_seconds = 0;
 
 
