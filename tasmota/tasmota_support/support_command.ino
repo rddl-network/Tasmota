@@ -47,7 +47,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_BALANCE "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_GETACCOUNTID "|"
   D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|" 
   D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" D_CMND_REMOVE_FILES "|" D_CMND_POPINIT "|"
-  D_CMND_CHALLENGE "|" D_CMND_POPCHALLENGERESULT "|"
+  D_CMND_CHALLENGE "|" D_CMND_POPCHALLENGERESULT "|" D_CMND_REDEEMCLAIMS "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -92,7 +92,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndBalance, &CmdResolveCid, &CmndPlanetmintDenom, &CmndGetAccountID, 
   &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
   &CmndNotarizationPeriodicity, &CmndNotarize, &CmndRemoveFiles, &CmndPoPInit,
-  &CmndChallenge, &CmndPoPChallengeResult,
+  &CmndChallenge, &CmndPoPChallengeResult, &CmndRedeemClaims,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -932,7 +932,6 @@ void CmndPlanetmintChainID(void) {
 }
 
 void CmndMachineData(void) {
-
   if( !sdkGetPlntmntKeys() ){
     Response_P("{ \"%s\":\"%s\" }", D_CMND_MACHINEDATA, "Initialize Keys first (Mnemonic)");
   }
@@ -953,7 +952,6 @@ void CmndMachineData(void) {
 }
 
 void CmndPoPChallenge(void) {
-
   if( XdrvMailbox.data_len )
   {
     sdkClearStack();
@@ -1052,7 +1050,6 @@ void CmndRemoveFiles(void) {
 
 
 void CmndPoPInit(void) {
-
   if( XdrvMailbox.data_len )
   {
     sdkClearStack();
@@ -1075,7 +1072,6 @@ void CmndPoPInit(void) {
 }
 
 void CmndChallenge(void) {
-
   if( XdrvMailbox.data_len )
   {
     sdkClearStack();
@@ -1118,6 +1114,28 @@ void CmndPoPChallengeResult(void) {
   CmndStatusResponse(37);
   ResponseClear();
 }
+
+void CmndRedeemClaims(void) {
+  if( XdrvMailbox.data_len )
+  {
+    sdkClearStack();
+    char* liquidAddress = (char*)sdkGetStack( XdrvMailbox.data_len + 1);
+    memset( liquidAddress, 0, XdrvMailbox.data_len + 1);
+    strncpy( liquidAddress, (const char*) XdrvMailbox.data, XdrvMailbox.data_len);
+    bool result = RDDLSDKRedeemClaim( (const char*)liquidAddress );
+    if( result ){
+      Response_P( "{ \"%s\": \"%s\" }", D_CMND_REDEEMCLAIMS, "Success: redeemed the claims!" );
+    } else {
+      Response_P( "{ \"%s\": \"%s\" }", D_CMND_REDEEMCLAIMS, "Failed: to redeem the claims" );
+    }
+  }
+  else{
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_REDEEMCLAIMS, "Please define a liquid recipient address" );
+  }
+  CmndStatusResponse(38);
+  ResponseClear();
+}
+
 
 void CmndStatus(void)
 {
