@@ -47,7 +47,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_BALANCE "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_GETACCOUNTID "|"
   D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|" 
   D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" D_CMND_REMOVE_FILES "|" D_CMND_POPINIT "|"
-  D_CMND_CHALLENGE "|" D_CMND_POPCHALLENGERESULT "|" D_CMND_REDEEMCLAIMS "|"
+  D_CMND_CHALLENGE "|" D_CMND_POPCHALLENGERESULT "|" D_CMND_REDEEMCLAIMS "|" D_CMND_CREATEACCOUNT "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -92,7 +92,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndBalance, &CmdResolveCid, &CmndPlanetmintDenom, &CmndGetAccountID, 
   &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
   &CmndNotarizationPeriodicity, &CmndNotarize, &CmndRemoveFiles, &CmndPoPInit,
-  &CmndChallenge, &CmndPoPChallengeResult, &CmndRedeemClaims,
+  &CmndChallenge, &CmndPoPChallengeResult, &CmndRedeemClaims, &CmndCreateAccount,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -1135,6 +1135,28 @@ void CmndRedeemClaims(void) {
   CmndStatusResponse(38);
   ResponseClear();
 }
+
+void CmndCreateAccount(void) {
+  if( XdrvMailbox.data_len )
+  {
+    sdkClearStack();
+    char* baseUri = (char*)sdkGetStack( XdrvMailbox.data_len + 1);
+    memset( baseUri, 0, XdrvMailbox.data_len + 1);
+    strncpy( baseUri, (const char*) XdrvMailbox.data, XdrvMailbox.data_len);
+    int result = CreateAccount( (const char*)baseUri );
+    if( result == 0 ){
+      Response_P( "{ \"%s\": \"%s\" }", D_CMND_CREATEACCOUNT, "Success: Created the account!" );
+    } else {
+      Response_P( "{ \"%s\": \"%s\" }", D_CMND_CREATEACCOUNT, "Failed: account creation failed" );
+    }
+  }
+  else{
+    Response_P( "{ \"%s\": \"%s\" }", D_CMND_CREATEACCOUNT, "Please define a base URL like https://ta.rddl.io" );
+  }
+  CmndStatusResponse(39);
+  ResponseClear();
+}
+
 
 
 void CmndStatus(void)
