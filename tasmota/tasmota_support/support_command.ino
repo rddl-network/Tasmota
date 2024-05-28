@@ -47,7 +47,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_BALANCE "|" D_CMND_RESOLVEID "|" D_CMND_PLANETMINTDENOM "|" D_CMND_GETACCOUNTID "|"
   D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|" 
   D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" D_CMND_REMOVE_FILES "|" D_CMND_POPINIT "|"
-  D_CMND_CHALLENGE "|" D_CMND_POPCHALLENGERESULT "|" D_CMND_REDEEMCLAIMS "|" D_CMND_CREATEACCOUNT "|"
+  D_CMND_CHALLENGE "|" D_CMND_POPCHALLENGERESULT "|" D_CMND_REDEEMCLAIMS "|" D_CMND_CREATEACCOUNT "|" D_CMND_CIDSTOBEQUERIED "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -92,7 +92,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndBalance, &CmdResolveCid, &CmndPlanetmintDenom, &CmndGetAccountID, 
   &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
   &CmndNotarizationPeriodicity, &CmndNotarize, &CmndRemoveFiles, &CmndPoPInit,
-  &CmndChallenge, &CmndPoPChallengeResult, &CmndRedeemClaims, &CmndCreateAccount,
+  &CmndChallenge, &CmndPoPChallengeResult, &CmndRedeemClaims, &CmndCreateAccount, &CmndCIDsToBeQueried,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -1157,7 +1157,18 @@ void CmndCreateAccount(void) {
   ResponseClear();
 }
 
+void CmndCIDsToBeQueried(void) {
+  if( XdrvMailbox.data_len ) {
+    //verify convertibility
+    uint32_t value = (uint32_t)atoi(sdkGetSetting( SET_CIDS_TO_BE_QUERIED));
+    sdkSetSetting( SET_CIDS_TO_BE_QUERIED, XdrvMailbox.data);
+  }
 
+  Response_P( "{ \"%s\": \"%s\" }", D_CMND_CIDSTOBEQUERIED, sdkGetSetting( SET_CIDS_TO_BE_QUERIED) );
+
+  CmndStatusResponse(40);
+  ResponseClear();
+}
 
 void CmndStatus(void)
 {
