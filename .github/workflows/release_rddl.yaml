@@ -30,6 +30,9 @@ jobs:
           git tag ${{ github.event.inputs.tag }}
           git push origin ${{ github.event.inputs.tag }}
 
+      - name: Detele potentially existing cache
+        run: rm -rf .cache
+
       - name: Docker container
         run: docker build -t docker-tasmota -f docker/Dockerfile ./docker/
 
