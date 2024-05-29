@@ -44,11 +44,11 @@ jobs:
           mv ./build_output/firmware/tasmota32.bin ./build_output/firmware/tasmota32-rddl.bin
           mv .pio/build/tasmota32/firmware.elf ./build_output/firmware/tasmota32-rddl.elf
           mv ./build_output/firmware/tasmota32.factory.bin ./build_output/firmware/tasmota32-rddl.factory.bin
-          mv ./build_output/firmware/tasmota32.map.gz ./build_output/firmware/tasmota32-rddl.map.gz
+          mv ./build_output/map/tasmota32.map.gz ./build_output/map/tasmota32-rddl.map.gz
           mv ./build_output/firmware/tasmota32c3.bin ./build_output/firmware/tasmota32c3-rddl.bin
           mv .pio/build/tasmota32c3/firmware.elf ./build_output/firmware/tasmota32c3-rddl.elf
           mv ./build_output/firmware/tasmota32c3.factory.bin ./build_output/firmware/tasmota32c3-rddl.factory.bin
-          mv ./build_output/firmware/tasmota32c3.map.gz ./build_output/firmware/tasmota32c3-rddl.map.gz
+          mv ./build_output/map/tasmota32c3.map.gz ./build_output/map/tasmota32c3-rddl.map.gz
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -58,11 +58,11 @@ jobs:
             ./build_output/firmware/tasmota32-rddl.bin
             ./build_output/firmware/tasmota32-rddl.elf
             ./build_output/firmware/tasmota32-rddl.factory.bin
-            ./build_output/firmware/tasmota32-rddl.map.gz
+            ./build_output/map/tasmota32-rddl.map.gz
             ./build_output/firmware/tasmota32c3-rddl.bin
             ./build_output/firmware/tasmota32c3-rddl.elf
             ./build_output/firmware/tasmota32c3-rddl.factory.bin
-            ./build_output/firmware/tasmota32c3-rddl.map.gz
+            ./build_output/map/tasmota32c3-rddl.map.gz
           name: ${{ github.event.inputs.tag }}
           tag_name: ${{ github.event.inputs.tag }}
           fail_on_unmatched_files: true
