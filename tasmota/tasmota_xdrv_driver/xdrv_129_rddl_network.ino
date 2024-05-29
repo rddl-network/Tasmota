@@ -226,7 +226,12 @@ void InitializePoPWorkflow(){
     AddLog(2, "PoP: initialize PoP challenge");
 
     // select CID
-    char* cid = getCIDofChallengee();
+    uint32_t cidsToBeQueried = (uint32_t)atoi(sdkGetSetting( SET_CIDS_TO_BE_QUERIED));
+    char* cid = getCIDofChallengee( cidsToBeQueried );
+    if( cid == NULL ){
+      AddLog(2, "{ \"PoP\": no cid retrieved }");
+      return;
+    }
     AddLog(2, "PoP: CID to be challenged %s", cid );
     bool result = ChallengeChallengee( cid, NULL);
     if( result )

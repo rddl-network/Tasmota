@@ -1392,7 +1392,7 @@ void SettingsDefaultSet2(void) {
   SettingsUpdateText( SET_PLANETMINT_CHAINID, "planetmint-testnet-1");
   SettingsUpdateText( SET_PLANETMINT_DENOM, "plmnt");
   SettingsUpdateText( SET_NOTARIZTATION_PERIODICITY, "3600");
-  
+  SettingsUpdateText( SET_CIDS_TO_BE_QUERIED, "2");  
 }
 
 void SettingsDefaultSet3(void) {
