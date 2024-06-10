@@ -280,6 +280,7 @@
 #define D_CMND_NOTARIZE "Notarize"
 #define D_CMND_REMOVE_FILES "RemoveFiles"
 #define D_CMND_CIDSTOBEQUERIED "CIDsToBeQueried"
+#define D_CMND_VERSION "Version"
 #define D_CMND_STATUS "Status"
   #define D_STATUS1_PARAMETER "PRM"
   #define D_STATUS2_FIRMWARE "FWR"

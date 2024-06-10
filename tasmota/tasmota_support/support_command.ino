@@ -48,6 +48,7 @@ const char kTasmotaCommands[] PROGMEM = "|"  // No prefix
   D_CMND_PLANETMINTCHAINID "|" D_CMND_MACHINEDATA "|"  D_CMND_POPCHALLENGE "|" D_CMND_ATTESTMACHINE "|" 
   D_CMND_NOTARIZATION_PERIODICITY "|" D_CMND_NOTARIZE "|" D_CMND_REMOVE_FILES "|" D_CMND_POPINIT "|"
   D_CMND_CHALLENGE "|" D_CMND_POPCHALLENGERESULT "|" D_CMND_REDEEMCLAIMS "|" D_CMND_CREATEACCOUNT "|" D_CMND_CIDSTOBEQUERIED "|"
+  D_CMND_VERSION "|"
 #ifdef USE_I2C
   D_CMND_I2CSCAN "|" D_CMND_I2CDRIVER "|"
 #endif
@@ -93,6 +94,7 @@ void (* const TasmotaCommand[])(void) PROGMEM = {
   &CmndPlanetmintChainID, &CmndMachineData, &CmndPoPChallenge, &CmndAttestMachine,
   &CmndNotarizationPeriodicity, &CmndNotarize, &CmndRemoveFiles, &CmndPoPInit,
   &CmndChallenge, &CmndPoPChallengeResult, &CmndRedeemClaims, &CmndCreateAccount, &CmndCIDsToBeQueried,
+  &CmndVersion,
 #ifdef USE_I2C
   &CmndI2cScan, &CmndI2cDriver,
 #endif
@@ -979,7 +981,6 @@ void CmndPoPChallenge(void) {
   else{
     Response_P( "{ \"%s\": \"%s\" }", D_CMND_POPCHALLENGE, "Please define a challenge" );
   }
-  
   MqttPublishPrefixTopicRulesProcess_P(STAT, D_CMND_POPCHALLENGERESULT, Settings->flag5.mqtt_status_retain);
   ResponseClear();
 }
@@ -1167,6 +1168,13 @@ void CmndCIDsToBeQueried(void) {
   Response_P( "{ \"%s\": \"%s\" }", D_CMND_CIDSTOBEQUERIED, sdkGetSetting( SET_CIDS_TO_BE_QUERIED) );
 
   CmndStatusResponse(40);
+  ResponseClear();
+}
+
+void CmndVersion(void) {
+  Response_P( "{ \"%s\": \"%s\" }", D_CMND_VERSION, RDDL_VERSION);
+
+  CmndStatusResponse(41);
   ResponseClear();
 }
 

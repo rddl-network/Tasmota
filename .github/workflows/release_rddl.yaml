@@ -30,6 +30,10 @@ jobs:
           git tag ${{ github.event.inputs.tag }}
           git push origin ${{ github.event.inputs.tag }}
 
+      - name: Define source code Tag version
+        run: |
+          sed -i 's/rddl-v0.0.0/${{ github.event.inputs.tag }}/' tasmota/user_config_override_sample.h 
+
       - name: Detele potentially existing cache
         run: rm -rf .cache
 

@@ -137,6 +137,7 @@ void SetExecutePoP(){
   executePoP = true;
 }
 
+
 void releaseNotarizationMutex()
 {
   g_mutex_running_notarization = false;
@@ -226,7 +227,14 @@ void InitializePoPWorkflow(){
     AddLog(2, "PoP: initialize PoP challenge");
 
     // select CID
-    uint32_t cidsToBeQueried = (uint32_t)atoi(sdkGetSetting( SET_CIDS_TO_BE_QUERIED));
+    uint32_t cidsToBeQueried = 1;
+    char* cids2Bqueried = sdkGetSetting(SET_CIDS_TO_BE_QUERIED);
+    if( cids2Bqueried == NULL or strcmp( (const char*) cids2Bqueried, "") == 0 )
+      cidsToBeQueried = 2;
+    uint32_t tmpCids2Bqueried = (uint32_t)atoi(cids2Bqueried);
+    if( tmpCids2Bqueried > 0 ){
+      cidsToBeQueried = tmpCids2Bqueried;
+    }
     char* cid = getCIDofChallengee( cidsToBeQueried );
     if( cid == NULL ){
       AddLog(2, "{ \"PoP\": no cid retrieved }");
